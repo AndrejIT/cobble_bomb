@@ -65,6 +65,7 @@ minetest.register_entity("cobble_bomb:cobblebomb", {
     textures = {"cobble_texture.png"},
     bomb_inertion = 10,
     bomb_timer = nil,
+    bomb_punched =nil,
 
     on_step = function(self, dtime)
         --explode when timer runs out. 20 seconds.
@@ -78,7 +79,7 @@ minetest.register_entity("cobble_bomb:cobblebomb", {
         end
         --falling give more inertion. may explode if fall to hard.
         local vel = self.object:getvelocity();
-        if self.bomb_inertion < 20 and vel.y > 0.1 and vel.y > -3 then
+        if self.bomb_inertion < 20 and vel.y < -0.1 and vel.y > -3 then
             self.bomb_inertion = self.bomb_inertion + 1;
         elseif vel.y < -10 and self.bomb_inertion > 1 then
             --warn players bellow
@@ -89,13 +90,16 @@ minetest.register_entity("cobble_bomb:cobblebomb", {
         end
         --bounce around, inertion slowly fades
         if vector.length(vel)<0.1 then
-            self.object:setacceleration({x=math.random(-1, 1)*self.bomb_inertion*10, y=-10, z=math.random(-1, 1)*self.bomb_inertion*10});
             if self.bomb_inertion < 1 then
                 self:bomb_explode();
                 return;
             else
+                self.object:setacceleration({x=math.random(-1, 1)*self.bomb_inertion*10, y=-10, z=math.random(-1, 1)*self.bomb_inertion*10});
                 self.bomb_inertion = self.bomb_inertion - 1;
             end
+        elseif self.bomb_punched ~= nil then
+            self.object:setacceleration( self.bomb_punched );
+            self.bomb_punched = nil;
         elseif self.object:getacceleration() ~= {x=0, y=-10, z=0} then
             self.object:setacceleration({x=0, y=-10, z=0});
         end
@@ -108,8 +112,7 @@ minetest.register_entity("cobble_bomb:cobblebomb", {
 
     on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, dir)
         if time_from_last_punch > 1 then
-            local hit = {x=dir.x*16, y=-10, z=dir.z*16};
-            self.object:setacceleration( hit );
+            self.bomb_punched = {x=dir.x*100, y=-10, z=dir.z*100};
         end
     end,
 
@@ -123,15 +126,14 @@ minetest.register_entity("cobble_bomb:cobblebomb", {
 
         --destroys only stone and cobble nodes. Check protection only once.
         if not minetest.is_protected(pos, "") then
-            local stonenodes = minetest.find_nodes_in_area(vector.subtract(pos, 2), vector.add(pos, 2), {"default:stone", "default:cobble"});
+            local stonenodes = minetest.find_nodes_in_area(vector.subtract(pos, 2), vector.add(pos, 2), {"default:stone"});
             for _, p in ipairs(stonenodes) do
                 if math.random(1, 100) > 10 then
                     minetest.remove_node(p);
                 end
             end
-
-            self.object:remove();
         end
+        self.object:remove();
     end
 });
 
