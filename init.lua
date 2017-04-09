@@ -124,15 +124,16 @@ minetest.register_entity("cobble_bomb:cobblebomb", {
         entity_physics(pos, 4);
         add_effects(pos, 2);
 
-        --destroys only stone and cobble nodes. Check protection only once.
-        if not minetest.is_protected(pos, "") then
-            local stonenodes = minetest.find_nodes_in_area(vector.subtract(pos, 2), vector.add(pos, 2), {"default:stone"});
+        --destroys stone nodes, also lava and water. Ignore protection.
+        --if not minetest.is_protected(pos, "") then
+            local stonenodes = minetest.find_nodes_in_area(vector.subtract(pos, 2), vector.add(pos, 2),
+                {"default:stone", "default:lava_source", "default:water_source", "default:lava_flowing", "default:water_flowing"});
             for _, p in ipairs(stonenodes) do
                 if math.random(1, 100) > 10 then
                     minetest.remove_node(p);
                 end
             end
-        end
+        --end
         self.object:remove();
     end
 });
@@ -140,7 +141,7 @@ minetest.register_entity("cobble_bomb:cobblebomb", {
 minetest.register_craftitem("cobble_bomb:cobblebomb", {
 	description = "Cobble bomb",
 	inventory_image = "cobble_bomb.png",
- 
+
 	on_use = function(itemstack, user, pointed_thing)
 		local pos = user:getpos();
         local dir = user:get_look_dir();
