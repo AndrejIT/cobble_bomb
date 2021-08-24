@@ -21,12 +21,12 @@ local function entity_physics(pos, radius)
 	radius = radius * 2
 	local objs = minetest.get_objects_inside_radius(pos, radius)
 	for _, obj in pairs(objs) do
-		local obj_pos = obj:getpos()
-		local obj_vel = obj:getvelocity()
+		local obj_pos = obj:get_pos()
+		local obj_vel = obj:get_velocity()
 		local dist = math.max(1, vector.distance(pos, obj_pos))
 
 		if obj_vel ~= nil then
-			obj:setvelocity(calc_velocity(pos, obj_pos,
+			obj:set_velocity(calc_velocity(pos, obj_pos,
 					obj_vel, radius * 10))
 		end
 
@@ -78,12 +78,12 @@ minetest.register_entity("cobble_bomb:cobblebomb", {
             self.bomb_timer = self.bomb_timer + dtime;
         end
         --falling give more inertion. may explode if fall to hard.
-        local vel = self.object:getvelocity();
+        local vel = self.object:get_velocity();
         if self.bomb_inertion < 20 and vel.y < -0.1 and vel.y > -3 then
             self.bomb_inertion = self.bomb_inertion + 1;
         elseif vel.y < -10 and self.bomb_inertion > 1 then
             --warn players bellow
-            local pos = self.object:getpos();
+            local pos = self.object:get_pos();
             pos.y = pos.y - 30;
             minetest.sound_play("rolling_test", {pos=pos, gain=1.5, max_hear_distance=20});
             self.bomb_inertion = 0;
@@ -94,20 +94,20 @@ minetest.register_entity("cobble_bomb:cobblebomb", {
                 self:bomb_explode();
                 return;
             else
-                self.object:setacceleration({x=math.random(-1, 1)*self.bomb_inertion*10, y=-10, z=math.random(-1, 1)*self.bomb_inertion*10});
+                self.object:set_acceleration({x=math.random(-1, 1)*self.bomb_inertion*10, y=-10, z=math.random(-1, 1)*self.bomb_inertion*10});
                 self.bomb_inertion = self.bomb_inertion - 1;
             end
         elseif self.bomb_punched ~= nil then
-            self.object:setacceleration( self.bomb_punched );
+            self.object:set_acceleration( self.bomb_punched );
             self.bomb_punched = nil;
-        elseif self.object:getacceleration() ~= {x=0, y=-10, z=0} then
-            self.object:setacceleration({x=0, y=-10, z=0});
+        elseif self.object:get_acceleration() ~= {x=0, y=-10, z=0} then
+            self.object:set_acceleration({x=0, y=-10, z=0});
         end
     end,
 
     on_activate = function(self, staticdata, dtime_s)
-        self.object:setvelocity({x=0, y=0, z=0});
-        self.object:setacceleration({x=0, y=-10, z=0});
+        self.object:set_velocity({x=0, y=0, z=0});
+        self.object:set_acceleration({x=0, y=-10, z=0});
     end,
 
     on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, dir)
@@ -117,7 +117,7 @@ minetest.register_entity("cobble_bomb:cobblebomb", {
     end,
 
     bomb_explode = function(self)
-        local pos = self.object:getpos();
+        local pos = self.object:get_pos();
         pos = vector.round(pos);
 
         minetest.sound_play("tnt_explode", {pos=pos, gain=1.5, max_hear_distance=30});
@@ -143,7 +143,7 @@ minetest.register_craftitem("cobble_bomb:cobblebomb", {
 	inventory_image = "cobble_bomb.png",
 
 	on_use = function(itemstack, user, pointed_thing)
-		local pos = user:getpos();
+		local pos = user:get_pos();
         local dir = user:get_look_dir();
         if minetest.get_node( vector.add(pos, dir) ).name == "air" then
             pos = vector.add(pos, dir);
@@ -154,7 +154,7 @@ minetest.register_craftitem("cobble_bomb:cobblebomb", {
         end
         minetest.sound_play("rolling_test", {pos=pos, gain=1.5, max_hear_distance=20});
         local tmp_bomb = minetest.add_entity(pos, "cobble_bomb:cobblebomb");
-        tmp_bomb:setvelocity( vector.multiply(dir, 2) );
+        tmp_bomb:set_velocity( vector.multiply(dir, 2) );
         itemstack:take_item();
         return itemstack;
 	end,
@@ -169,6 +169,6 @@ minetest.register_craft({
 	}
 })
 
-if minetest.setting_get("log_mods") then
+if minetest.settings:get("log_mods") then
 	minetest.log("action", "cobblebomb loaded");
 end
